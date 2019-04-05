@@ -82,6 +82,7 @@ class GaussianProcess:
         # k(x1,x2) = sig_squared * exp{(-1/2*(datapoint1 - datapoint2) * M2 * (datapoint1 - datapoint2).T))}
         # M1  =  l^(-2)*I, M2 = diag(l)^(-2) , M3 = ones * ones.T + diag(l)^(-2)
 
+        # Characteristics length scale to be varied as a function of dimensions
         # Element wise squaring the vector of given length scales
         # char_len_scale = np.array(char_len_scale) ** 2
 

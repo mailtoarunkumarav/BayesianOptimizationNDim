@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from AcquisitionFunction import AcquisitionFunction
+
 # kernel_type = 0
 # number_of_test_datapoints = 20
 # np.random.seed(500)
@@ -84,7 +84,10 @@ class GaussianProcess:
 
         # Characteristic Length scale is different at different dimensions
         # Element wise squaring the vector of given length scales
-        char_len_scale = np.array(char_len_scale) ** 2
+        # char_len_scale = np.array(char_len_scale) ** 2
+
+        a=1; b=2
+        char_len_scale = a *data_point1 + b * data_point2
 
         # Creating a Diagonal matrix with squared l values
         sq_dia_len = np.diag(char_len_scale)

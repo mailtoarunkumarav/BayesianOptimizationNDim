@@ -7,7 +7,7 @@ import numpy as np
 import datetime
 import sys
 
-# setting up the global parameters for plotting graphs i.e, graph size and suppress warning from multiple graph
+# setting up the global parameters for plotting graphs i.e, graph size and suppress warning from multiple graphs
 # being plotted
 plt.rcParams["figure.figsize"] = (5, 5)
 plt.rcParams['figure.max_open_warning'] = 0

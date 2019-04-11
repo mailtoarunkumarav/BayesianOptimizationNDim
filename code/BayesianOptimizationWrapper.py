@@ -17,7 +17,7 @@ plt.rcParams['figure.max_open_warning'] = 0
 # Class for starting Bayesian Optimization with the specified parameters
 class BayesianOptimizationWrapper:
 
-    def opt_wrapper():
+    def opt_wrapper(start_time):
         # Required for plotting graphs in the casse of 1D
         linspacexmin = 0
         linspacexmax = 10
@@ -44,11 +44,11 @@ class BayesianOptimizationWrapper:
         # 2D functions : branin2d, sphere
         # true_func = 'sin'
         # true_func = 'cos'
-        # true_func = 'custom'
+        true_func = 'custom'
         # true_func = 'sphere'
         # true_func = 'branin2d'
         # true_func = 'hartmann3d'
-        true_func = 'hartmann6d'
+        # true_func = 'hartmann6d'
 
         if (true_func == 'sin' or true_func == 'cos' or true_func == 'custom'):
 
@@ -112,7 +112,7 @@ class BayesianOptimizationWrapper:
 
         #Boolean to specify estimation of length scale
         # params_estimation = False
-        params_estimation = True
+        params_estimation = False
 
         # Signal variance bounds
         signal_variance_bounds = [0.1, 1]
@@ -260,7 +260,7 @@ class BayesianOptimizationWrapper:
         # Generate the values for the Xaxis in the simple regret graph to display mean and variance at each evaluation
         # iterations_axes_values = np.arange(start = 1, stop = number_of_iterations+1, step = 1)
         iterations_axes_values = [i + 1 for i in np.arange(number_of_iterations)]
-        fig_name = 'Regret_'+str(true_func)+'_iter'+str(number_of_iterations)+'_runs'+str(number_of_runs)
+        fig_name = 'Regret_'+str(true_func)+'_iter'+str(number_of_iterations)+'_runs'+str(number_of_runs)+'_'
         plt.figure(str(fig_name))
         plt.clf()
         ax = plt.subplot(111)
@@ -327,11 +327,11 @@ class BayesianOptimizationWrapper:
         print("\nEnd time: ", timenow.strftime("%H%M%S_%d%m%Y"))
 
         # Set the parameters of the simple regret graph
-        plt.axis([1, number_of_iterations, 0, 10])
+        plt.axis([1, number_of_iterations, 0, 1])
         plt.title('Regret')
         plt.xlabel('Evaluations')
         plt.ylabel('Simple Regret')
-        plt.savefig(fig_name+'.png')
+        plt.savefig(fig_name+str(start_time)+'.png')
         legend = ax.legend(loc=1, fontsize='x-small')
         plt.show()
 
@@ -343,7 +343,7 @@ class BayesianOptimizationWrapper:
         f = open('console_output_'+str(stamp)+'.txt', 'w')
         original = sys.stdout
         sys.stdout = Custom_Print(sys.stdout, f)
-        opt_wrapper()
+        opt_wrapper(stamp)
 
 
 

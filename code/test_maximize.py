@@ -11,6 +11,81 @@ import datetime
 from scipy.spatial import distance
 
 
+
+
+
+# spatially varying length scale
+def len_scale_func( data_point):
+    a = 0;
+    b = 0;
+    len_scale_weights = np.zeros(data_point.shape)
+    len_scale_values = []
+    for dim_count in np.arange(len(data_point)):
+        len_scale_weights[dim_count] = 0.5
+        len_scale_values.append(np.dot( len_scale_weights.T, data_point))
+        print(len_scale_values)
+        len_scale_weights[dim_count] = 0
+    return len_scale_values
+
+
+def sq_exp_kernel( data_point1, data_point2, signal_variance):
+
+    kernel_mat = np.zeros(shape=(len(data_point1), len(data_point2)))
+    for i in np.arange(len(data_point1)):
+        for j in np.arange(len(data_point2)):
+
+            len_scale_vector_datapoint1 = len_scale_func(data_point1[i, :])
+            len_scale_vector_datapoint2 = len_scale_func(data_point2[j, :])
+            difference = ((data_point1[i, :] - data_point2[j, :]))
+
+            total_product = 1
+            total_sum = 0
+
+            for k in np.arange(len(len_scale_vector_datapoint1)):
+                denominator = len_scale_vector_datapoint1[k] ** 2 + len_scale_vector_datapoint2[k] ** 2
+                total_product *= (2 * len_scale_vector_datapoint1[k] * len_scale_vector_datapoint2[k]) / denominator
+                total_sum += 1 / denominator
+
+            squared_diff = np.dot(difference, difference.T)
+            each_kernel_val = (signal_variance ** 2) * np.sqrt(total_product) * (
+                np.exp((-1) * squared_diff * total_sum))
+            kernel_mat[i, j] = each_kernel_val
+
+    return kernel_mat
+
+
+number_of_dimensions = 3
+number_of_observed_samples = 3
+random_points = []
+X = []
+bounds = [[0, 1] for nd in np.arange(number_of_dimensions)]
+# Generate specified (number of observed samples) random numbers for each dimension
+for dim in np.arange(number_of_dimensions):
+    random_data_point_each_dim = np.random.uniform(bounds[dim][0], bounds[dim][1],
+                                                               number_of_observed_samples).reshape(1,
+                                                                                                   number_of_observed_samples)
+    random_points.append(random_data_point_each_dim)
+
+# Vertically stack the arrays obtained for each dimension in the form a matrix, so that it can be reshaped
+random_points = np.vstack(random_points)
+
+# Generated values are to be reshaped into input points in the form of x1=[x11, x12, x13].T
+for sample_num in np.arange(number_of_observed_samples):
+    array = []
+    for dim_count in np.arange(number_of_dimensions):
+        array.append(random_points[dim_count, sample_num])
+    X.append(array)
+X = np.vstack(X)
+
+# X = np.array([[1,2,1], [2,3,1], [3,1,1]])
+
+print (X)
+print(sq_exp_kernel(X, X, 1))
+exit(0)
+
+
+
+# modified way of implementing the squared exponential kernel
 def sq_exp_kernel( data_point1, data_point2, char_len_scale, signal_variance):
     print(data_point1)
     char_len_scale = char_len_scale ** 2

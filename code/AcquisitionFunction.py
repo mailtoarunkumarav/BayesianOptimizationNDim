@@ -60,7 +60,6 @@ class AcquisitionFunction():
     # Helper method to invoke the EI acquisition function
     def expected_improvement_util(self, x, y_max, gp_obj):
 
-
         with np.errstate(divide='ignore') or np.errstate(invalid='ignore'):
 
             # Use Gaussian Process to predict the values for mean and variance at given x

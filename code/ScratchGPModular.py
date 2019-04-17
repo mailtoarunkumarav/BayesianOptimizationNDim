@@ -78,7 +78,10 @@ class GaussianProcess:
 
         return result
 
-    def sq_exp_kernel_arxiv(self, data_point1, data_point2, char_len_scale, signal_variance):
+    def sq_exp_kernel(self, data_point1, data_point2, char_len_scale, signal_variance):
+
+        # Implements Automatic Relevance Determinations (ARD) Kernel
+
         # k(x1,x2) = sig_squared * exp{(-1/2*(datapoint1 - datapoint2) * M2 * (datapoint1 - datapoint2).T))}
         # M1  =  l^(-2)*I, M2 = diag(l)^(-2) , M3 = ones * ones.T + diag(l)^(-2)
 
@@ -100,34 +103,15 @@ class GaussianProcess:
                 kernel_mat[i, j] = each_kernel_val
         return kernel_mat
 
+    def sq_exp_kernel_var(self, data_point1, data_point2, char_len_scale, signal_variance):
 
-    def len_scale_func(self, data_point):
-        a = 0; b = 0;
-        len_scale_weights = np.zeros(data_point.shape)
-        len_scale_values = []
-        for dim_count in np.arange(len(data_point)):
-            # in case if it varies quadratically
-            # if(dim_count == 1 ):
-            #     len_scale_values[dim_count] = a * data_point[dim_count] + b * (data_point[dim_count] ** 2)
-            # if(dim_count == 2 ):
-            #     len_scale_values[dim_count] = a * data_point[dim_count] + b * data_point[dim_count]
-            # linearly varying length scale with respect to dimensions
-            len_scale_weights[dim_count] = 0.5
-            value = np.dot(len_scale_weights.T, data_point)
-            len_scale_weights[dim_count] = 0
-            if value == 0 :
-                value = 1e-6
-            len_scale_values.append(value)
-        return len_scale_values
-
-    def sq_exp_kernel(self, data_point1, data_point2, char_len_scale, signal_variance):
+        # Implements the spatially varying length scale
 
         # Commenting the following block as it is not required if spatially varying length scale is not computed
         # Creating a Diagonal matrix with squared l values
         # sq_dia_len = np.diag(char_len_scale)
         # Computing inverse of a diagonal matrix by reciprocating each item in the diagonal
         # inv_sq_dia_len = np.linalg.pinv(sq_dia_len)
-
 
         kernel_mat = np.zeros(shape=(len(data_point1), len(data_point2)))
         for i in np.arange(len(data_point1)):
@@ -151,6 +135,25 @@ class GaussianProcess:
                 kernel_mat[i, j] = each_kernel_val
 
         return kernel_mat
+
+    def len_scale_func(self, data_point):
+        a = 0; b = 0;
+        len_scale_weights = np.zeros(data_point.shape)
+        len_scale_values = []
+        for dim_count in np.arange(len(data_point)):
+            # in case if it varies quadratically
+            # if(dim_count == 1 ):
+            #     len_scale_values[dim_count] = a * data_point[dim_count] + b * (data_point[dim_count] ** 2)
+            # if(dim_count == 2 ):
+            #     len_scale_values[dim_count] = a * data_point[dim_count] + b * data_point[dim_count]
+            # linearly varying length scale with respect to dimensions
+            len_scale_weights[dim_count] = 0.5
+            value = np.dot(len_scale_weights.T, data_point)
+            len_scale_weights[dim_count] = 0
+            if value == 0 :
+                value = 1e-6
+            len_scale_values.append(value)
+        return len_scale_values
 
     def rational_quadratic_kernel(self, data_point1, data_point2, charac_length_scale, alpha):
 
@@ -254,7 +257,7 @@ class GaussianProcess:
         # Compute mean and variance
         mean, variance, factor1 = self.compute_mean_var(Xs, self.X, self.y)
         diag_variance = np.diag(variance)
-        standard_deviation = np.sqrt(diag_variance)
+        # standard_deviation = np.sqrt(diag_variance)
 
         # compute posteriors for the data points
         newL = np.linalg.cholesky(K_xs_xs + 1e-6 * np.eye(self.number_of_test_datapoints) - np.dot(factor1.T, factor1))
@@ -362,9 +365,9 @@ class GaussianProcess:
                                                 self.linspaceymax],
                                        'plotvalues': [[self.X, self.y, 'r+', 'ms15'], [Xs, ys, 'b-'], [Xs, mean,
                                                                                                        'g--', 'lw2']],
-                                       'title': 'GP Posterior Distribution with length scale L= ' + str(
-                                           self.char_length_scale),
-                                       'file': 'GP_Posterior_Distr'+str(count),
+                                       'title': 'GP Posterior Distr. with Spatially varying length scale'
+                                                # + str(self.char_length_scale)
+                                        ,'file': 'GP_Posterior_Distr'+str(count),
                                        'gca_fill': [Xs.flat, (mean.flatten() - 2 * standard_deviation).reshape(-1,1).flat,
                                                     (mean.flatten() + 2 * standard_deviation).reshape(-1,1).flat]
                                        }

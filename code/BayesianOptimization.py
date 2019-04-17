@@ -123,6 +123,7 @@ class BayesianOptimization:
             # if(self.gp_obj.number_of_dimensions==1):
             #     self.gp_obj.plot_posterior_predictions(self.acq_func_obj.acq_type + str(run_count) + '_' + str(i + 1),
             #                                            Xs, ys, mean, standard_deviation)
+            ######################
 
             # # plot acq functions and posteriors if its required to verify [0] being added to X
             # if(zero_value_bool):

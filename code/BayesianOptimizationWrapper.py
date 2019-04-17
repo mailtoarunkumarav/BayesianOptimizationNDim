@@ -33,7 +33,7 @@ class BayesianOptimizationWrapper:
 
         # Initial value to denote the type of ACQ function to be used, but ignored as all ACQs are run in the sequence
         # acq_fun_list = ['ei', 'pi', 'rs', 'ucb']
-        acq_fun_list = ['ei']
+        acq_fun_list = ['ei', 'pi', 'ucb', 'rs']
 
         # Number of points required to be observed to evaluate the unknown function ((10:20)*no_dimensions )
         # number_of_iterations = number_of_dimensions * 10
@@ -58,8 +58,8 @@ class BayesianOptimizationWrapper:
             # bounds used for 1D Sin and custom function
             oned_bounds = [[linspacexmin, linspacexmax]]
             bounds = oned_bounds
-            epsilon1 = 0.01
-            epsilon2 = 0.01
+            epsilon1 = 0.005
+            epsilon2 = 0.005
             number_of_iterations = 10
 
         elif (true_func == 'branin2d'):
@@ -98,7 +98,7 @@ class BayesianOptimizationWrapper:
         number_of_restarts = 15
 
         # Number of runs the BO has to be run for calculating the regret and the corresponding means and the standard devs
-        number_of_runs = 5
+        number_of_runs = 10
 
         # Type of kernel to be used in the optimization process
         # 0 - Squared Exponential; 1 - Rational Quadratic Function; 2 - Exponential; 3 - Periodic***(To be fixed)
@@ -108,11 +108,11 @@ class BayesianOptimizationWrapper:
         len_scale_bounds = [0.1, 1]
 
         # charcteristic_length_scale = np.array([1 for nd in np.arange(number_of_dimensions)])
-        charcteristic_length_scale = [0.1 for nd in np.arange(number_of_dimensions)]
+        charcteristic_length_scale = [0.5 for nd in np.arange(number_of_dimensions)]
 
         #Boolean to specify estimation of length scale
         # params_estimation = False
-        params_estimation = False
+        params_estimation = True
 
         # Signal variance bounds
         signal_variance_bounds = [0.1, 1]
@@ -208,9 +208,9 @@ class BayesianOptimizationWrapper:
                 acq_type = 'pi'
                 bay_opt_obj.acq_func_obj.set_acq_func_type(acq_type)
                 # Resetting the GP model because of the above stated reason
-                gaussianObject.gaussian_fit(X, y)
                 gaussianObject.charcteristic_length_scale = charcteristic_length_scale
                 gaussianObject.signal_variance = signal_variance
+                gaussianObject.gaussian_fit(X, y)
 
                 # Store the regret obtained in each run so that mean and variance can be calculated to plot the simple regret
                 pi_regret_eachrun = bay_opt_obj.run_bayes_opt(i + 1)
@@ -220,9 +220,9 @@ class BayesianOptimizationWrapper:
                 # Algorithm running for random search
                 acq_type = 'rs'
                 bay_opt_obj.acq_func_obj.set_acq_func_type(acq_type)
-                gaussianObject.gaussian_fit(X, y)
                 gaussianObject.charcteristic_length_scale = charcteristic_length_scale
                 gaussianObject.signal_variance = signal_variance
+                gaussianObject.gaussian_fit(X, y)
                 rs_regret_eachrun = bay_opt_obj.run_bayes_opt(i + 1)
                 total_rs_regret.append(rs_regret_eachrun)
 
@@ -230,23 +230,27 @@ class BayesianOptimizationWrapper:
                 # Algorithm running for EI acquisition function
                 acq_type = 'ei'
                 bay_opt_obj.acq_func_obj.set_acq_func_type(acq_type)
-                gaussianObject.gaussian_fit(X, y)
                 gaussianObject.charcteristic_length_scale = charcteristic_length_scale
                 gaussianObject.signal_variance = signal_variance
+                gaussianObject.gaussian_fit(X, y)
                 ei_regret_eachrun = bay_opt_obj.run_bayes_opt(i + 1)
                 total_ei_regret.append(ei_regret_eachrun)
+
+
+
+
 
             if ('ucb' in acq_fun_list):
                 # Algorithm running for UCB acquisition function
                 acq_type = 'ucb'
                 bay_opt_obj.acq_func_obj.set_acq_func_type(acq_type)
-                gaussianObject.gaussian_fit(X, y)
                 gaussianObject.charcteristic_length_scale = charcteristic_length_scale
                 gaussianObject.signal_variance = signal_variance
+                gaussianObject.gaussian_fit(X, y)
                 ucb_regret_eachrun = bay_opt_obj.run_bayes_opt(i + 1)
                 total_ucb_regret.append(ucb_regret_eachrun)
 
-            # plot to verify the posterior after each run
+            # plot regret to verify the posterior after each run
             # iterations_axes = np.arange(start = 1, stop = number_of_iterations+1, step = 1)
             # plt.figure("Regret"+str(i+1))
             # plt.clf()
@@ -328,7 +332,7 @@ class BayesianOptimizationWrapper:
 
         # Set the parameters of the simple regret graph
         plt.axis([1, number_of_iterations, 0, 1])
-        plt.title('Regret')
+        plt.title('Regret for ARD Kernel')
         plt.xlabel('Evaluations')
         plt.ylabel('Simple Regret')
         plt.savefig(fig_name+str(start_time)+'.png')

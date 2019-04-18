@@ -33,7 +33,7 @@ class BayesianOptimizationWrapper:
 
         # Initial value to denote the type of ACQ function to be used, but ignored as all ACQs are run in the sequence
         # acq_fun_list = ['ei', 'pi', 'rs', 'ucb']
-        acq_fun_list = ['ei', 'pi', 'ucb', 'rs']
+        acq_fun_list = ['ei']
 
         # Number of points required to be observed to evaluate the unknown function ((10:20)*no_dimensions )
         # number_of_iterations = number_of_dimensions * 10
@@ -50,7 +50,7 @@ class BayesianOptimizationWrapper:
         # true_func = 'hartmann3d'
         # true_func = 'hartmann6d'
 
-        if (true_func == 'sin' or true_func == 'cos' or true_func == 'custom'):
+        if true_func == 'sin' or true_func == 'cos' or true_func == 'custom':
 
             # Number of the dimensions being used in the optimization
             number_of_dimensions = 1
@@ -62,7 +62,7 @@ class BayesianOptimizationWrapper:
             epsilon2 = 0.005
             number_of_iterations = 10
 
-        elif (true_func == 'branin2d'):
+        elif true_func == 'branin2d':
             number_of_dimensions = 2
             branin_bounds = [[-5, 10], [0, 15]]
             bounds = branin_bounds
@@ -70,12 +70,12 @@ class BayesianOptimizationWrapper:
             epsilon2 = 0.001
             number_of_iterations = 40
 
-        elif (true_func == 'sphere'):
+        elif true_func == 'sphere':
             number_of_dimensions = 2
             sphere_bounds = [[0, 10], [0, 10]]
             bounds = sphere_bounds
 
-        elif (true_func == 'hartmann3d'):
+        elif true_func == 'hartmann3d':
             number_of_dimensions = 3
             hartmann3d_bounds = [[0, 1] for nd in np.arange(number_of_dimensions)]
             bounds = hartmann3d_bounds
@@ -98,11 +98,14 @@ class BayesianOptimizationWrapper:
         number_of_restarts = 15
 
         # Number of runs the BO has to be run for calculating the regret and the corresponding means and the standard devs
-        number_of_runs = 10
+        number_of_runs = 3
 
         # Type of kernel to be used in the optimization process
         # 0 - Squared Exponential; 1 - Rational Quadratic Function; 2 - Exponential; 3 - Periodic***(To be fixed)
         kernel_type = 0
+
+        # Characteristics of the Kernel being used, currently implemented for the square exponential kernel
+        kernel_char = 'ard'
 
         # Characteristic length scale to be used in the kernel function
         len_scale_bounds = [0.1, 1]
@@ -110,7 +113,7 @@ class BayesianOptimizationWrapper:
         # charcteristic_length_scale = np.array([1 for nd in np.arange(number_of_dimensions)])
         charcteristic_length_scale = [0.5 for nd in np.arange(number_of_dimensions)]
 
-        #Boolean to specify estimation of length scale
+        # Boolean to specify estimation of length scale
         # params_estimation = False
         params_estimation = True
 
@@ -140,6 +143,11 @@ class BayesianOptimizationWrapper:
         total_pi_regret = []
         total_rs_regret = []
 
+        # Added to generate the results for comparing regrets for spatially varying length scales.
+        ei_ard_regret = []
+        ei_var_l_regret = []
+        ei_fixed_l_regret = []
+
         #############################################################################
         #############################################################################
 
@@ -156,7 +164,7 @@ class BayesianOptimizationWrapper:
                                              number_of_test_datapoints, noise,
                                              random_seed, linspacexmin, linspacexmax, linspaceymin, linspaceymax,
                                              bounds,
-                                             number_of_dimensions, number_of_observed_samples)
+                                             number_of_dimensions, number_of_observed_samples, kernel_char)
 
             # Creating an ACQ object to hold the parameters of the ACQ functions
             acq_func_obj = AcquisitionFunction(None, number_of_restarts, kappa, epsilon1,
@@ -230,14 +238,27 @@ class BayesianOptimizationWrapper:
                 # Algorithm running for EI acquisition function
                 acq_type = 'ei'
                 bay_opt_obj.acq_func_obj.set_acq_func_type(acq_type)
-                gaussianObject.charcteristic_length_scale = charcteristic_length_scale
-                gaussianObject.signal_variance = signal_variance
-                gaussianObject.gaussian_fit(X, y)
-                ei_regret_eachrun = bay_opt_obj.run_bayes_opt(i + 1)
-                total_ei_regret.append(ei_regret_eachrun)
 
+                for iter_type in ['ard', 'var_l', 'fix_l']:
+                    gaussianObject.charcteristic_length_scale = charcteristic_length_scale
+                    gaussianObject.signal_variance = signal_variance
+                    gaussianObject.gaussian_fit(X, y)
+                    # total_ei_regret.append(ei_regret_eachrun)         #Commented as it is replaced by other code
 
+                    gaussianObject.kernel_char = iter_type
+                    if(iter_type == 'ard'):
+                        gaussianObject.params_estimation = True
+                        ei_regret_eachrun = bay_opt_obj.run_bayes_opt(i + 1)
+                        ei_ard_regret.append(ei_regret_eachrun)
 
+                    elif(iter_type == 'var_l'):
+                        ei_regret_eachrun = bay_opt_obj.run_bayes_opt(i + 1)
+                        ei_var_l_regret.append(ei_regret_eachrun)
+
+                    elif (iter_type == 'fix_l'):
+                        gaussianObject.params_estimation = False
+                        ei_regret_eachrun = bay_opt_obj.run_bayes_opt(i + 1)
+                        ei_fixed_l_regret.append(ei_regret_eachrun)
 
 
             if ('ucb' in acq_fun_list):

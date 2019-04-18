@@ -13,7 +13,7 @@ class GaussianProcess:
     def __init__(self, kernel_type, params_estimation, char_length_scale, len_scale_bounds,
                  signal_variance, signal_variance_bounds,
                  number_of_test_datapoints, noise, random_seed, linspacexmin, linspacexmax,
-                 linspaceymin, linspaceymax, bounds, number_of_dimensions, number_of_observed_samples):
+                 linspaceymin, linspaceymax, bounds, number_of_dimensions, number_of_observed_samples, kernel_char):
 
         self.kernel_type = kernel_type
         self.params_estimation = params_estimation
@@ -33,6 +33,7 @@ class GaussianProcess:
         self.signal_variance = signal_variance
         self.signal_variance_bounds = signal_variance_bounds
         self.L_x_x = np.zeros(number_of_dimensions)
+        self.kernel_char = kernel_char
 
     # Method to set the model used by the Gaussian Process
     def gaussian_fit(self,X, y):
@@ -80,6 +81,21 @@ class GaussianProcess:
 
     def sq_exp_kernel(self, data_point1, data_point2, char_len_scale, signal_variance):
 
+
+        if( self.kernel_char == 'ard' or self.kernel_char == 'fix_l'):
+
+            if(self.params_estimation == True):
+                print("ARD kernel is set for the computations")
+            else:
+                print("Fixed length kernel is set for the computations")
+            return self.ard_sq_exp_kernel(data_point1, data_point2, char_len_scale, signal_variance)
+
+        elif(self.kernel_char == 'var_l'):
+            print("ARD kernel is set for the computations")
+            return self.var_sq_exp_kernel(data_point1, data_point2, char_len_scale, signal_variance)
+
+    def ard_sq_exp_kernel(self, data_point1, data_point2, char_len_scale, signal_variance):
+
         # Implements Automatic Relevance Determinations (ARD) Kernel
 
         # k(x1,x2) = sig_squared * exp{(-1/2*(datapoint1 - datapoint2) * M2 * (datapoint1 - datapoint2).T))}
@@ -103,7 +119,7 @@ class GaussianProcess:
                 kernel_mat[i, j] = each_kernel_val
         return kernel_mat
 
-    def sq_exp_kernel_var(self, data_point1, data_point2, char_len_scale, signal_variance):
+    def var_sq_exp_kernel(self, data_point1, data_point2, char_len_scale, signal_variance):
 
         # Implements the spatially varying length scale
 

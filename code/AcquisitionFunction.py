@@ -115,11 +115,11 @@ class AcquisitionFunction():
         random_points = np.vstack(random_points)
 
         # Reformat the generated random starting points in the form [x1 x2].T for the specified number of restarts
-        for sample_num in np.arange(gp_obj.number_of_observed_samples):
+        for sample_num in np.arange(self.number_of_restarts):
             array = []
             for dim_count in np.arange(gp_obj.number_of_dimensions):
                 array.append(random_points[dim_count, sample_num])
-                starting_points.append(array)
+            starting_points.append(array)
         starting_points= np.vstack(starting_points)
 
         # Find maxima of the ACQ function using PI

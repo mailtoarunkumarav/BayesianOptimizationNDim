@@ -84,14 +84,14 @@ class GaussianProcess:
 
         if( self.kernel_char == 'ard' or self.kernel_char == 'fix_l'):
 
-            if(self.params_estimation == True):
-                print("ARD kernel is set for the computations")
-            else:
-                print("Fixed length kernel is set for the computations")
+            # if(self.params_estimation == True):
+            #     print("ARD kernel is set for the computations")
+            # else:
+            # print("Fixed length kernel is set for the computations")
             return self.ard_sq_exp_kernel(data_point1, data_point2, char_len_scale, signal_variance)
 
         elif(self.kernel_char == 'var_l'):
-            print("ARD kernel is set for the computations")
+            # print("Var kernel is set for the computations")
             return self.var_sq_exp_kernel(data_point1, data_point2, char_len_scale, signal_variance)
 
     def ard_sq_exp_kernel(self, data_point1, data_point2, char_len_scale, signal_variance):

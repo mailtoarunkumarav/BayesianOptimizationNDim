@@ -82,7 +82,7 @@ class BayesianOptimization:
                 self.gp_obj.signal_variance = maxima['x'][len(maxima['x']) -1]
                 print("Opt Length scale: ", self.gp_obj.char_length_scale, "\nOpt variance: ", self.gp_obj.signal_variance)
                 # Recomputing L according to the updated length scale
-                self.gp_obj.L_X_X = self.gp_obj.compute_l(self.gp_obj.X)
+                self.gp_obj.L_x_x = self.gp_obj.compute_l(self.gp_obj.X)
 
             # Random search to find the maxima in the specified bounds
             if (self.acq_func_obj.acq_type == 'rs'):

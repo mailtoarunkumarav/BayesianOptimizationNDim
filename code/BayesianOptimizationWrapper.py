@@ -60,7 +60,7 @@ class BayesianOptimizationWrapper:
             bounds = oned_bounds
             epsilon1 = 0.005
             epsilon2 = 0.005
-            number_of_iterations = 10
+            number_of_iterations = 20
 
         elif true_func == 'branin2d':
             number_of_dimensions = 2
@@ -98,7 +98,7 @@ class BayesianOptimizationWrapper:
         number_of_restarts = 15
 
         # Number of runs the BO has to be run for calculating the regret and the corresponding means and the standard devs
-        number_of_runs = 3
+        number_of_runs = 100
 
         # Type of kernel to be used in the optimization process
         # 0 - Squared Exponential; 1 - Rational Quadratic Function; 2 - Exponential; 3 - Periodic***(To be fixed)
@@ -110,8 +110,8 @@ class BayesianOptimizationWrapper:
         # Characteristic length scale to be used in the kernel function
         len_scale_bounds = [0.1, 1]
 
-        # charcteristic_length_scale = np.array([1 for nd in np.arange(number_of_dimensions)])
-        charcteristic_length_scale = [0.5 for nd in np.arange(number_of_dimensions)]
+        # characteristic_length_scale = np.array([1 for nd in np.arange(number_of_dimensions)])
+        char_length_scale = [0.5 for nd in np.arange(number_of_dimensions)]
 
         # Boolean to specify estimation of length scale
         # params_estimation = False
@@ -159,7 +159,7 @@ class BayesianOptimizationWrapper:
         for i in range(number_of_runs):
 
             # Create Gaussian Process  object to carry on the prediction and model fitting tasks
-            gaussianObject = GaussianProcess(kernel_type, params_estimation, charcteristic_length_scale,
+            gaussianObject = GaussianProcess(kernel_type, params_estimation, char_length_scale,
                                              len_scale_bounds, signal_variance, signal_variance_bounds,
                                              number_of_test_datapoints, noise,
                                              random_seed, linspacexmin, linspacexmax, linspaceymin, linspaceymax,
@@ -204,7 +204,7 @@ class BayesianOptimizationWrapper:
             y = bay_opt_obj.func_helper_obj.get_true_func_value(X)
 
             # Fit the gaussian model for the generated sample data
-            gaussianObject.gaussian_fit(X, y)
+            # gaussianObject.gaussian_fit(X, y)
 
             # Running the optimization for different acquisition values
             # Make sure to reset the Gaussian Process to the initial setting before running the optimization for
@@ -216,7 +216,7 @@ class BayesianOptimizationWrapper:
                 acq_type = 'pi'
                 bay_opt_obj.acq_func_obj.set_acq_func_type(acq_type)
                 # Resetting the GP model because of the above stated reason
-                gaussianObject.charcteristic_length_scale = charcteristic_length_scale
+                gaussianObject.char_length_scale = char_length_scale
                 gaussianObject.signal_variance = signal_variance
                 gaussianObject.gaussian_fit(X, y)
 
@@ -228,7 +228,7 @@ class BayesianOptimizationWrapper:
                 # Algorithm running for random search
                 acq_type = 'rs'
                 bay_opt_obj.acq_func_obj.set_acq_func_type(acq_type)
-                gaussianObject.charcteristic_length_scale = charcteristic_length_scale
+                gaussianObject.char_length_scale = char_length_scale
                 gaussianObject.signal_variance = signal_variance
                 gaussianObject.gaussian_fit(X, y)
                 rs_regret_eachrun = bay_opt_obj.run_bayes_opt(i + 1)
@@ -240,22 +240,26 @@ class BayesianOptimizationWrapper:
                 bay_opt_obj.acq_func_obj.set_acq_func_type(acq_type)
 
                 for iter_type in ['ard', 'var_l', 'fix_l']:
-                    gaussianObject.charcteristic_length_scale = charcteristic_length_scale
+                    gaussianObject.char_length_scale = char_length_scale
                     gaussianObject.signal_variance = signal_variance
-                    gaussianObject.gaussian_fit(X, y)
-                    # total_ei_regret.append(ei_regret_eachrun)         #Commented as it is replaced by other code
-
                     gaussianObject.kernel_char = iter_type
+                    gaussianObject.gaussian_fit(X, y)
+                    # total_ei_regret.append(ei_regret_eachrun)         # Commented as it is replaced by other code
+
                     if(iter_type == 'ard'):
+                        print("Testing with ARD Kernel in Run: ", (i+1))
                         gaussianObject.params_estimation = True
                         ei_regret_eachrun = bay_opt_obj.run_bayes_opt(i + 1)
                         ei_ard_regret.append(ei_regret_eachrun)
 
                     elif(iter_type == 'var_l'):
+                        print("Testing with Varying Kernel in Run: ", (i + 1))
+                        gaussianObject.params_estimation = False
                         ei_regret_eachrun = bay_opt_obj.run_bayes_opt(i + 1)
                         ei_var_l_regret.append(ei_regret_eachrun)
 
                     elif (iter_type == 'fix_l'):
+                        print("Testing with fixed Kernel in Run: ", (i + 1))
                         gaussianObject.params_estimation = False
                         ei_regret_eachrun = bay_opt_obj.run_bayes_opt(i + 1)
                         ei_fixed_l_regret.append(ei_regret_eachrun)
@@ -265,7 +269,7 @@ class BayesianOptimizationWrapper:
                 # Algorithm running for UCB acquisition function
                 acq_type = 'ucb'
                 bay_opt_obj.acq_func_obj.set_acq_func_type(acq_type)
-                gaussianObject.charcteristic_length_scale = charcteristic_length_scale
+                gaussianObject.char_length_scale = char_length_scale
                 gaussianObject.signal_variance = signal_variance
                 gaussianObject.gaussian_fit(X, y)
                 ucb_regret_eachrun = bay_opt_obj.run_bayes_opt(i + 1)
@@ -311,17 +315,62 @@ class BayesianOptimizationWrapper:
 
 
         if ('ei' in acq_fun_list):
-            total_ei_regret = np.vstack(total_ei_regret)
-            ei_regret_mean = np.mean(total_ei_regret, axis=0)
-            ei_regret_std_dev = np.std(total_ei_regret, axis=0)
-            print("\n\nTotal EI Regret\n", total_ei_regret, "\n\nEI Regret Mean", ei_regret_mean,
-                  "\n\nEI Regret Deviation\n",
-                  ei_regret_std_dev)
 
-            ax.plot(iterations_axes_values, ei_regret_mean, 'b')
-            # plt.errorbar(iterations_axes_values, ei_regret_mean, yerr= ei_regret_std_dev )
-            plt.gca().fill_between(iterations_axes_values, ei_regret_mean + ei_regret_std_dev,
-                                   ei_regret_mean - ei_regret_std_dev, color="blue", alpha=0.25, label="EI")
+            # #Commented to plot graphs for specific type of kernel using the same EI acq.
+            # total_ei_regret = np.vstack(total_ei_regret)
+            # ei_regret_mean = np.mean(total_ei_regret, axis=0)
+            # ei_regret_std_dev = np.std(total_ei_regret, axis=0)
+            # print("\n\nTotal EI Regret\n", total_ei_regret, "\n\nEI Regret Mean", ei_regret_mean,
+            #       "\n\nEI Regret Deviation\n",
+            #       ei_regret_std_dev)
+            #
+            # ax.plot(iterations_axes_values, ei_regret_mean, 'b')
+            # # plt.errorbar(iterations_axes_values, ei_regret_mean, yerr= ei_regret_std_dev )
+            # plt.gca().fill_between(iterations_axes_values, ei_regret_mean + ei_regret_std_dev,
+            #                        ei_regret_mean - ei_regret_std_dev, color="blue", alpha=0.25, label="EI")
+
+
+            # Modifications here to accomodate new variables to plot
+            for iter_type in ['ard', 'var_l', 'fix_l']:
+                if (iter_type == 'ard'):
+                    ei_ard_regret = np.vstack(ei_ard_regret)
+                    ei_ard_regret_mean = np.mean(ei_ard_regret, axis=0)
+                    ei_ard_regret_std_dev = np.std(ei_ard_regret, axis=0)
+                    print("\n\nTotal EI ARD Regret\n", ei_ard_regret, "\n\nARD Regret Mean", ei_ard_regret_mean,
+                          "\n\nARD Regret Deviation\n", ei_ard_regret_std_dev)
+
+                    ax.plot(iterations_axes_values, ei_ard_regret_mean, 'b')
+                    # plt.errorbar(iterations_axes_values, ei_regret_mean, yerr= ei_regret_std_dev )
+                    plt.gca().fill_between(iterations_axes_values, ei_ard_regret_mean + ei_ard_regret_std_dev,
+                                ei_ard_regret_mean - ei_ard_regret_std_dev, color="blue", alpha=0.25, label="EI ARD")
+
+
+                elif (iter_type == 'var_l'):
+                    ei_var_l_regret = np.vstack(ei_var_l_regret)
+                    ei_var_regret_mean = np.mean(ei_var_l_regret, axis=0)
+                    ei_var_regret_std_dev = np.std(ei_var_l_regret, axis=0)
+                    print("\n\nTotal EI VAR Regret\n", ei_var_l_regret, "\n\nVAR Regret Mean", ei_var_regret_mean,
+                          "\n\nVAR Regret Deviation\n", ei_var_regret_std_dev)
+
+                    ax.plot(iterations_axes_values, ei_var_regret_mean, 'g')
+                    # plt.errorbar(iterations_axes_values, ei_regret_mean, yerr= ei_regret_std_dev )
+                    plt.gca().fill_between(iterations_axes_values, ei_var_regret_mean + ei_var_regret_std_dev,
+                                           ei_var_regret_mean - ei_var_regret_std_dev, color="green", alpha=0.25,
+                                           label="EI VAR")
+
+
+                elif (iter_type == 'fix_l'):
+                    ei_fixed_l_regret = np.vstack(ei_fixed_l_regret)
+                    ei_fix_regret_mean = np.mean(ei_fixed_l_regret, axis=0)
+                    ei_fix_regret_std_dev = np.std(ei_fixed_l_regret, axis=0)
+                    print("\n\nTotal EI FIX Regret\n", ei_fixed_l_regret, "\n\nFIX Regret Mean", ei_fix_regret_mean,
+                          "\n\nFIX Regret Deviation\n", ei_fix_regret_std_dev)
+
+                    ax.plot(iterations_axes_values, ei_fix_regret_mean, 'r')
+                    # plt.errorbar(iterations_axes_values, ei_regret_mean, yerr= ei_regret_std_dev )
+                    plt.gca().fill_between(iterations_axes_values, ei_fix_regret_mean + ei_fix_regret_std_dev,
+                                           ei_fix_regret_mean - ei_fix_regret_std_dev, color="red", alpha=0.25,
+                                           label="EI FIX")
 
         if ('ucb' in acq_fun_list):
             total_ucb_regret = np.vstack(total_ucb_regret)
@@ -353,7 +402,7 @@ class BayesianOptimizationWrapper:
 
         # Set the parameters of the simple regret graph
         plt.axis([1, number_of_iterations, 0, 1])
-        plt.title('Regret for ARD Kernel')
+        plt.title('Regret')
         plt.xlabel('Evaluations')
         plt.ylabel('Simple Regret')
         plt.savefig(fig_name+str(start_time)+'.png')

@@ -11,13 +11,33 @@ import datetime
 from scipy.spatial import distance
 
 
+# Returning multiple values
+def myfun(a,b):
 
+    print(a,b)
+    return a,b
 
+# y = myfun(10,20)
+# print(y[0])
+a = np.array([10,20,30,40,50,60])
+print(a[:2])
 
-# spatially varying length scale
+exit(0)
+
+# Array manipulations
+a = np.array([])
+a = np.append(a,10)
+c = 3 / 5;
+print(c)
+print(a)
+
+exit(0)
+
+# Implementing spatially varying length scale
 def len_scale_func( data_point):
     a = 0;
     b = 0;
+
     len_scale_weights = np.zeros(data_point.shape)
     len_scale_values = []
     for dim_count in np.arange(len(data_point)):

@@ -153,9 +153,12 @@ class GaussianProcess:
         return kernel_mat
 
     def len_scale_func(self, data_point):
-        a = 0; b = 0;
-        len_scale_weights = np.zeros(data_point.shape)
-        len_scale_values = []
+
+        a = 1; b = 1;
+        # len_scale_weights = np.zeros(data_point.shape)
+        len_scale_weights = np.array([])
+        len_scale_values = np.array([])
+        data_point_values = np.array([])
         for dim_count in np.arange(len(data_point)):
             # in case if it varies quadratically
             # if(dim_count == 1 ):
@@ -163,12 +166,18 @@ class GaussianProcess:
             # if(dim_count == 2 ):
             #     len_scale_values[dim_count] = a * data_point[dim_count] + b * data_point[dim_count]
             # linearly varying length scale with respect to dimensions
-            len_scale_weights[dim_count] = 0.5
-            value = np.dot(len_scale_weights.T, data_point)
-            len_scale_weights[dim_count] = 0
+            # len_scale_weights[dim_count] = a
+            len_scale_weights = np.append(len_scale_weights,a)
+            len_scale_weights = np.append(len_scale_weights,b)
+            data_point_values = np.append(data_point_values, data_point[0])
+            data_point_values = np.append(data_point_values, data_point[0] ** 2)
+
+            # value = np.dot(len_scale_weights.T, data_point) + b
+            value = np.dot(len_scale_weights.T, data_point_values)
+
             if value == 0 :
                 value = 1e-6
-            len_scale_values.append(value)
+            len_scale_values = np.append(len_scale_values, value)
         return len_scale_values
 
     def rational_quadratic_kernel(self, data_point1, data_point2, charac_length_scale, alpha):
